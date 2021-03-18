@@ -95,8 +95,8 @@ Accordingly, in the following plot the x-axis represents the date and the y-axis
 num_of_days = len(bitstamp_btc_usd.index)
 lumpsum_investment = num_of_days * 10
 
-num_satoshis_bought = lumpsum_investment / bitstamp_btc_usd['Last']
-lumpsum = num_satoshis_bought * bitstamp_btc_usd['Last'][-1]
+num_btc_bought = lumpsum_investment / bitstamp_btc_usd['Last']
+lumpsum = num_btc_bought * bitstamp_btc_usd['Last'][-1]
 
 fig, ax = plt.subplots(figsize=(15, 7))
 
@@ -158,7 +158,7 @@ lumpsum_performance
 The following chart shows a one-time purchase of Bitcoin in March 2020, the amount invested in USD and the associated performance of the portfolio. This would've been very profitable...
 
 ```python
-lumpsum_portfolio_value = bitstamp_btc_usd.loc[lumpsum.index, 'Last'] * num_satoshis_bought.loc[lumpsum.idxmax()]
+lumpsum_portfolio_value = bitstamp_btc_usd.loc[lumpsum.index, 'Last'] * num_btc_bought.loc[lumpsum.idxmax()]
 lumpsum_portfolio_value[lumpsum.index[lumpsum.index <= lumpsum.idxmax()]] = 0.0
 
 invested_usd = pd.Series(lumpsum_investment, index=lumpsum.index)
@@ -213,11 +213,11 @@ def simulate_dca(btc_price_df, investment, investment_start, investment_period, 
     # create series for investments (in usd)
     acc_usd_investments = pd.Series(investment, index=buy_dates, name='invested').cumsum()
     
-    # get the total of purchased satoshis for each of those dates
-    acc_satoshis_bought = (investment / btc_prices).cumsum()
+    # get the total of purchased btc for each of those dates
+    acc_btc_bought = (investment / btc_prices).cumsum()
     
     # calculate the final portfolio value
-    total_portfolio_value = btc_prices * acc_satoshis_bought
+    total_portfolio_value = btc_prices * acc_btc_bought
     
     return acc_usd_investments, total_portfolio_value
 ```
@@ -297,29 +297,29 @@ def simulate_va(btc_price_df, investment, investment_start, investment_period, i
     # create series for investment goal / targeted portfolio value for each date
     acc_investment_goal = pd.Series(investment, index=buy_dates, name='portfolio_value').cumsum()
     
-    # create empty series for purchased sats (will be filled in loop)
-    num_satoshis_bought = pd.Series(np.nan, index=buy_dates)
-    acc_satoshis_bought = pd.Series(np.nan, index=buy_dates)
+    # create empty series for purchased btc (will be filled in loop)
+    num_btc_bought = pd.Series(np.nan, index=buy_dates)
+    acc_btc_bought = pd.Series(np.nan, index=buy_dates)
     
     # add initial investment as further VA investments depends on it
-    num_satoshis_bought.iloc[0] = acc_investment_goal.iloc[0] / btc_prices.iloc[0]
-    acc_satoshis_bought.iloc[0] = acc_investment_goal.iloc[0] / btc_prices.iloc[0]
+    num_btc_bought.iloc[0] = acc_investment_goal.iloc[0] / btc_prices.iloc[0]
+    acc_btc_bought.iloc[0] = acc_investment_goal.iloc[0] / btc_prices.iloc[0]
     
-    # iterate through buy dates to set bought satoshis for each day
+    # iterate through buy dates to set bought btc for each day
     for d in range(1, len(buy_dates)):
         # check if investment would be positive to reach the target invested amount on date d
-        if (acc_investment_goal.iloc[d] - (btc_prices.iloc[d] * acc_satoshis_bought[d-1])) / btc_prices.iloc[d] > 0:
-            # set num of satoshis bought on date d (investment goal - current portfolio value) / current price
-            num_satoshis_bought.iloc[d] = (acc_investment_goal.iloc[d] - (btc_prices.iloc[d] * acc_satoshis_bought[d-1])) / btc_prices.iloc[d]
+        if (acc_investment_goal.iloc[d] - (btc_prices.iloc[d] * acc_btc_bought[d-1])) / btc_prices.iloc[d] > 0:
+            # set num of btc bought on date d (investment goal - current portfolio value) / current price
+            num_btc_bought.iloc[d] = (acc_investment_goal.iloc[d] - (btc_prices.iloc[d] * acc_btc_bought[d-1])) / btc_prices.iloc[d]
         else:
-            # set num of satoshis bought to 0 as portfolio grew enough in value
-            num_satoshis_bought.iloc[d] = 0.0 
+            # set num of btc bought to 0 as portfolio grew enough in value
+            num_btc_bought.iloc[d] = 0.0 
         
-        # cumsum bought satoshis as next investment depends on current portfolio value
-        acc_satoshis_bought = num_satoshis_bought.cumsum()
+        # cumsum bought btc as next investment depends on current portfolio value
+        acc_btc_bought = num_btc_bought.cumsum()
     
     # actual VA investments on each date
-    acc_investments = (btc_prices * num_satoshis_bought).cumsum()
+    acc_investments = (btc_prices * num_btc_bought).cumsum()
     
     return acc_investment_goal, acc_investments
 ```
